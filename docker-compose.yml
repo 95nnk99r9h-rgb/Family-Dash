@@ -1,0 +1,12 @@
+services:
+  family-dash:
+    build: .
+    container_name: family-dash
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - TZ_DEFAULT=Europe/Berlin
+      # - ADMIN_PIN=1234
+    volumes:
+      - ./data:/data

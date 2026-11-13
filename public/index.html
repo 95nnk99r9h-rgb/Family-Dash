@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Family Dash</title>
+  <meta name="description" content="Unser Familien-Dashboard: Wetter, Termine, To-dos, Essensplan und Einkaufsliste.">
+  <meta name="theme-color" content="#141a33">
+  <meta name="color-scheme" content="dark">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Family Dash">
+  <meta name="format-detection" content="telephone=no">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" href="/icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+  <!-- Hintergrund: Bild (unscharf) + fließende Farbflächen + Körnung -->
+  <div class="bg" aria-hidden="true">
+    <div class="bg-img" id="bg-a"></div>
+    <div class="bg-img" id="bg-b"></div>
+    <div class="blobs">
+      <span class="blob b1"></span><span class="blob b2"></span><span class="blob b3"></span><span class="blob b4"></span>
+    </div>
+    <div class="bg-veil"></div>
+    <div class="bg-grain"></div>
+  </div>
+
+  <!-- Gemeinsame SVG-Verläufe für Wetter-Symbole -->
+  <svg class="defs" aria-hidden="true" width="0" height="0">
+    <defs>
+      <linearGradient id="g-sun" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffe27a"/><stop offset="1" stop-color="#ff9d3c"/></linearGradient>
+      <linearGradient id="g-moon" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f6f3ff"/><stop offset="1" stop-color="#b9b4ff"/></linearGradient>
+      <linearGradient id="g-cloud" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#cfdcf0"/></linearGradient>
+      <linearGradient id="g-cloud-dark" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c6d0e0"/><stop offset="1" stop-color="#8794ab"/></linearGradient>
+      <linearGradient id="g-drop" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8fd3ff"/><stop offset="1" stop-color="#3b8cff"/></linearGradient>
+      <linearGradient id="g-bolt" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff07a"/><stop offset="1" stop-color="#ffb21c"/></linearGradient>
+    </defs>
+  </svg>
+
+  <div class="app">
+    <main id="view" class="view" tabindex="-1"></main>
+  </div>
+
+  <nav class="dock glass" id="dock" aria-label="Hauptnavigation">
+    <span class="dock-indicator" aria-hidden="true"></span>
+  </nav>
+
+  <div id="sheet-root"></div>
+  <div class="toasts" id="toasts" role="status" aria-live="polite"></div>
+
+  <script type="module" src="/js/app.js"></script>
+</body>
+</html>

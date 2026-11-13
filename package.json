@@ -1,0 +1,14 @@
+{
+  "name": "family-dash",
+  "version": "1.0.0",
+  "description": "Familien-Dashboard (PWA) mit Wetter, Apple-Kalender, To-dos, Essensplan und Bring!-Einkaufsliste",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "start": "node server.js",
+    "demo": "DEMO=1 node server.js",
+    "test": "node --test test/*.test.js",
+    "icons": "node scripts/make-icons.mjs"
+  },
+  "engines": { "node": ">=18" }
+}
