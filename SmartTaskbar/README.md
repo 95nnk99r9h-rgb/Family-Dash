@@ -7,6 +7,14 @@ Eine neu gedachte Taskleiste für Windows 10/11. Neben deinen Apps zeigt sie, **
  Start  Apps         nächster Outlook-Termin           Teams/Zoom      Claude-Code-Sitzungen                                     Fokus  Wetter    System     Uhr → Tagesübersicht
 ```
 
+![Smart Taskbar](docs/bar-detail.png)
+
+| Tagesübersicht | Claude-Sitzung |
+|---|---|
+| ![Tagesübersicht](docs/2-tagesuebersicht.png) | ![Claude-Sitzung](docs/3-claude-sitzung.png) |
+
+*Nachgebaute Ansichten mit Beispieldaten; unter Windows erscheinen die echten App-Symbole.*
+
 ## Was sie kann
 
 | Bereich | Funktion |
