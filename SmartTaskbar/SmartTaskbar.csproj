@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <AssemblyName>SmartTaskbar</AssemblyName>
+    <RootNamespace>SmartTaskbar</RootNamespace>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <!-- Erlaubt das Bauen auch auf Nicht-Windows-Rechnern (z. B. CI) -->
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <Version>0.1.0</Version>
+  </PropertyGroup>
+
+</Project>

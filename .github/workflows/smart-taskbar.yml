@@ -1,0 +1,23 @@
+name: Smart Taskbar (Windows)
+
+on:
+  push:
+    paths: ["SmartTaskbar/**", ".github/workflows/smart-taskbar.yml"]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+      - name: Bauen
+        run: dotnet build SmartTaskbar/SmartTaskbar.csproj -c Release
+      - name: Als einzelne .exe veröffentlichen
+        run: dotnet publish SmartTaskbar/SmartTaskbar.csproj -c Release -r win-x64 --self-contained false -p:PublishSingleFile=true -o publish
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SmartTaskbar-win-x64
+          path: publish/SmartTaskbar.exe

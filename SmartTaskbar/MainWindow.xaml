@@ -1,0 +1,215 @@
+<Window x:Class="SmartTaskbar.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:SmartTaskbar.ViewModels"
+        Title="Smart Taskbar"
+        WindowStyle="None" ResizeMode="NoResize" ShowInTaskbar="False" Topmost="True"
+        Background="Transparent" Foreground="White"
+        FontFamily="{StaticResource UiFont}" FontSize="13"
+        UseLayoutRounding="True" TextOptions.TextFormattingMode="Display"
+        Height="52" Width="1200">
+
+  <Window.Resources>
+    <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+
+    <!-- Pulsierender Punkt für "arbeitet gerade" -->
+    <Style x:Key="PulseDot" TargetType="Ellipse">
+      <Setter Property="Width" Value="9"/>
+      <Setter Property="Height" Value="9"/>
+      <Style.Triggers>
+        <DataTrigger Binding="{Binding IsWorking}" Value="True">
+          <DataTrigger.EnterActions>
+            <BeginStoryboard x:Name="Pulse">
+              <Storyboard RepeatBehavior="Forever" AutoReverse="True">
+                <DoubleAnimation Storyboard.TargetProperty="Opacity" From="1" To="0.25" Duration="0:0:0.8"/>
+              </Storyboard>
+            </BeginStoryboard>
+          </DataTrigger.EnterActions>
+          <DataTrigger.ExitActions>
+            <StopStoryboard BeginStoryboardName="Pulse"/>
+          </DataTrigger.ExitActions>
+        </DataTrigger>
+      </Style.Triggers>
+    </Style>
+
+    <!-- App-Symbol in der Leiste -->
+    <DataTemplate x:Key="TaskTemplate" DataType="{x:Type vm:TaskGroup}">
+      <Button Style="{StaticResource BarButton}" Padding="0" Width="44" Height="44" Margin="1,0"
+              ToolTip="{Binding ToolTip}"
+              Click="Task_Click" MouseRightButtonUp="Task_RightClick" PreviewMouseDown="Task_MiddleClick">
+        <Grid>
+          <Border x:Name="ActiveBg" CornerRadius="8" Background="Transparent"/>
+          <Image Source="{Binding Icon}" Width="26" Height="26" RenderOptions.BitmapScalingMode="HighQuality"/>
+          <!-- Anzeige: läuft / aktiv -->
+          <Border x:Name="Indicator" Height="3" Width="0" CornerRadius="1.5"
+                  VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0,0,0,2"
+                  Background="{StaticResource MutedBrush}"/>
+          <!-- Anzahl Fenster -->
+          <Border Visibility="{Binding HasMany, Converter={StaticResource BoolToVis}}"
+                  Background="{StaticResource AccentBrush}" CornerRadius="6" MinWidth="12" Height="12"
+                  HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,4,4,0" Padding="3,0">
+            <TextBlock Text="{Binding Windows.Count}" FontSize="9" FontWeight="Bold"
+                       Foreground="#111" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+          </Border>
+        </Grid>
+      </Button>
+      <DataTemplate.Triggers>
+        <DataTrigger Binding="{Binding IsRunning}" Value="True">
+          <Setter TargetName="Indicator" Property="Width" Value="6"/>
+        </DataTrigger>
+        <DataTrigger Binding="{Binding IsActive}" Value="True">
+          <Setter TargetName="Indicator" Property="Width" Value="18"/>
+          <Setter TargetName="Indicator" Property="Background" Value="{StaticResource AccentBrush}"/>
+          <Setter TargetName="ActiveBg" Property="Background" Value="#1AFFFFFF"/>
+        </DataTrigger>
+      </DataTemplate.Triggers>
+    </DataTemplate>
+
+    <!-- Claude-Sitzung -->
+    <DataTemplate x:Key="ClaudeTemplate" DataType="{x:Type vm:ClaudeChip}">
+      <Button x:Name="Chip" Style="{StaticResource ChipButton}" ToolTip="{Binding ToolTip}" Click="Claude_Click">
+        <StackPanel Orientation="Horizontal">
+          <Ellipse Style="{StaticResource PulseDot}" Fill="{Binding StateColor}" Margin="0,0,8,0" VerticalAlignment="Center"/>
+          <StackPanel MaxWidth="150">
+            <TextBlock Text="{Binding Session.Project}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+            <TextBlock Style="{StaticResource Small}">
+              <Run Text="{Binding StateText, Mode=OneWay}"/><Run Text=" · "/><Run Text="{Binding Ago, Mode=OneWay}"/>
+            </TextBlock>
+          </StackPanel>
+        </StackPanel>
+      </Button>
+      <DataTemplate.Triggers>
+        <DataTrigger Binding="{Binding Attention}" Value="True">
+          <Setter TargetName="Chip" Property="Background" Value="#40FBBF24"/>
+        </DataTrigger>
+      </DataTemplate.Triggers>
+    </DataTemplate>
+  </Window.Resources>
+
+  <Border Background="{StaticResource BarBrush}" BorderBrush="{StaticResource LineBrush}" BorderThickness="0,1,0,0">
+    <Grid Margin="6,0">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="Auto"/>   <!-- Start -->
+        <ColumnDefinition Width="Auto"/>   <!-- Apps -->
+        <ColumnDefinition Width="*"/>      <!-- Smart-Bereich -->
+        <ColumnDefinition Width="Auto"/>   <!-- Widgets -->
+      </Grid.ColumnDefinitions>
+
+      <!-- Start-Knopf -->
+      <Button Grid.Column="0" Style="{StaticResource BarButton}" Width="44" Height="44" Padding="0"
+              ToolTip="Start (Rechtsklick: Einstellungen &amp; Beenden)"
+              Click="Start_Click" MouseRightButtonUp="Start_RightClick">
+        <UniformGrid Rows="2" Columns="2" Width="18" Height="18">
+          <Rectangle Fill="#60A5FA" Margin="0.8" RadiusX="1.5" RadiusY="1.5"/>
+          <Rectangle Fill="#818CF8" Margin="0.8" RadiusX="1.5" RadiusY="1.5"/>
+          <Rectangle Fill="#38BDF8" Margin="0.8" RadiusX="1.5" RadiusY="1.5"/>
+          <Rectangle Fill="#A78BFA" Margin="0.8" RadiusX="1.5" RadiusY="1.5"/>
+        </UniformGrid>
+      </Button>
+
+      <!-- Angeheftete und offene Apps -->
+      <ItemsControl Grid.Column="1" x:Name="TaskItems" ItemTemplate="{StaticResource TaskTemplate}"
+                    VerticalAlignment="Center" Margin="2,0,8,0">
+        <ItemsControl.ItemsPanel>
+          <ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate>
+        </ItemsControl.ItemsPanel>
+      </ItemsControl>
+
+      <!-- Smart-Bereich: nächster Termin + Claude-Sitzungen -->
+      <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Center" ClipToBounds="True">
+        <Button x:Name="AgendaChip" Style="{StaticResource ChipButton}" Click="Agenda_Click">
+          <StackPanel Orientation="Horizontal">
+            <Border x:Name="AgendaBar" Width="3" CornerRadius="1.5" Margin="0,2,9,2" Background="{StaticResource AccentBrush}"/>
+            <StackPanel MaxWidth="300">
+              <TextBlock x:Name="AgendaTitle" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" Text="Kalender"/>
+              <TextBlock x:Name="AgendaSub" Style="{StaticResource Small}" Text="wird geladen …"/>
+            </StackPanel>
+          </StackPanel>
+        </Button>
+        <Button x:Name="JoinButton" Style="{StaticResource ChipButton}" Visibility="Collapsed"
+                Background="#3360A5FA" Click="Join_Click" ToolTip="Online-Besprechung beitreten">
+          <StackPanel Orientation="Horizontal">
+            <TextBlock FontFamily="{StaticResource IconFont}" Text="&#xE714;" Margin="0,0,6,0" VerticalAlignment="Center"/>
+            <TextBlock Text="Beitreten" FontWeight="SemiBold"/>
+          </StackPanel>
+        </Button>
+
+        <Rectangle x:Name="ClaudeSeparator" Width="1" Height="24" Fill="{StaticResource LineBrush}" Margin="8,0" Visibility="Collapsed"/>
+        <ItemsControl x:Name="ClaudeItems" ItemTemplate="{StaticResource ClaudeTemplate}" VerticalAlignment="Center">
+          <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate>
+          </ItemsControl.ItemsPanel>
+        </ItemsControl>
+        <Button x:Name="ClaudeMore" Style="{StaticResource ChipButton}" Visibility="Collapsed" Click="ClaudeMore_Click">
+          <TextBlock x:Name="ClaudeMoreText" Text="+0"/>
+        </Button>
+      </StackPanel>
+
+      <!-- Widgets rechts -->
+      <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center">
+        <Button x:Name="FocusButton" Style="{StaticResource BarButton}" Click="Focus_Click"
+                ToolTip="Fokus-Timer starten / stoppen">
+          <StackPanel Orientation="Horizontal">
+            <Grid Width="18" Height="18" Margin="0,0,6,0">
+              <Ellipse Stroke="{StaticResource MutedBrush}" StrokeThickness="2"/>
+              <Path x:Name="FocusArc" Stroke="{StaticResource AccentBrush}" StrokeThickness="2"
+                    StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+            </Grid>
+            <TextBlock x:Name="FocusText" Text="Fokus" VerticalAlignment="Center"/>
+          </StackPanel>
+        </Button>
+
+        <Button x:Name="WeatherButton" Style="{StaticResource BarButton}" Click="Weather_Click">
+          <StackPanel Orientation="Horizontal">
+            <TextBlock x:Name="WeatherGlyph" FontFamily="Segoe UI Emoji" FontSize="17" Margin="0,0,6,0" VerticalAlignment="Center" Text="☁"/>
+            <StackPanel>
+              <TextBlock x:Name="WeatherTemp" FontWeight="SemiBold" Text="–°"/>
+              <TextBlock x:Name="WeatherSub" Style="{StaticResource Small}" Text=""/>
+            </StackPanel>
+          </StackPanel>
+        </Button>
+
+        <Button x:Name="StatsButton" Style="{StaticResource BarButton}" Click="Stats_Click" ToolTip="Task-Manager öffnen">
+          <StackPanel Width="64">
+            <Grid Margin="0,1">
+              <TextBlock Style="{StaticResource Small}" Text="CPU"/>
+              <Border Height="4" Width="36" HorizontalAlignment="Right" CornerRadius="2" Background="{StaticResource ChipBrush}">
+                <Border x:Name="CpuBar" HorizontalAlignment="Left" CornerRadius="2" Width="0" Background="{StaticResource AccentBrush}"/>
+              </Border>
+            </Grid>
+            <Grid Margin="0,1">
+              <TextBlock Style="{StaticResource Small}" Text="RAM"/>
+              <Border Height="4" Width="36" HorizontalAlignment="Right" CornerRadius="2" Background="{StaticResource ChipBrush}">
+                <Border x:Name="RamBar" HorizontalAlignment="Left" CornerRadius="2" Width="0" Background="#A78BFA"/>
+              </Border>
+            </Grid>
+          </StackPanel>
+        </Button>
+
+        <TextBlock x:Name="BatteryText" Style="{StaticResource Small}" Margin="4,0" VerticalAlignment="Center" Visibility="Collapsed"/>
+
+        <Button x:Name="ClockButton" Style="{StaticResource BarButton}" Click="Agenda_Click" Padding="12,4">
+          <StackPanel>
+            <TextBlock x:Name="ClockTime" FontWeight="SemiBold" HorizontalAlignment="Right" Text="00:00"/>
+            <TextBlock x:Name="ClockDate" Style="{StaticResource Small}" HorizontalAlignment="Right" Text=""/>
+          </StackPanel>
+        </Button>
+      </StackPanel>
+
+      <!-- Tagesübersicht -->
+      <Popup x:Name="AgendaPopup" Placement="Top" StaysOpen="False" AllowsTransparency="True"
+             PopupAnimation="Fade" VerticalOffset="-8">
+        <Border Background="{StaticResource PopupBrush}" BorderBrush="{StaticResource LineBrush}" BorderThickness="1"
+                CornerRadius="12" Padding="16,14" Width="380">
+          <StackPanel>
+            <TextBlock x:Name="PopupHeader" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,2"/>
+            <TextBlock x:Name="PopupStatus" Style="{StaticResource Small}" Margin="0,0,0,8" TextWrapping="Wrap"/>
+            <ScrollViewer MaxHeight="460" VerticalScrollBarVisibility="Auto">
+              <StackPanel x:Name="PopupList"/>
+            </ScrollViewer>
+          </StackPanel>
+        </Border>
+      </Popup>
+    </Grid>
+  </Border>
+</Window>
